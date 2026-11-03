@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-sans: "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --background: 210 33% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 32% 94%;
+    --secondary-foreground: 222 47% 15%;
+    --muted: 214 32% 95%;
+    --muted-foreground: 215 16% 42%;
+    --accent: 214 60% 95%;
+    --accent-foreground: 221 70% 35%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 60% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 35 92% 45%;
+    --warning-foreground: 0 0% 100%;
+    --border: 214 25% 88%;
+    --input: 214 25% 85%;
+    --ring: 221 83% 53%;
+    --radius: 0.65rem;
+    --sidebar: 0 0% 100%;
+    --sidebar-foreground: 222 30% 25%;
+  }
+  .dark {
+    --background: 222 40% 7%;
+    --foreground: 210 30% 95%;
+    --card: 222 35% 10%;
+    --card-foreground: 210 30% 95%;
+    --popover: 222 35% 11%;
+    --popover-foreground: 210 30% 95%;
+    --primary: 217 91% 62%;
+    --primary-foreground: 222 47% 8%;
+    --secondary: 222 25% 17%;
+    --secondary-foreground: 210 30% 92%;
+    --muted: 222 25% 15%;
+    --muted-foreground: 215 18% 65%;
+    --accent: 222 30% 18%;
+    --accent-foreground: 213 90% 78%;
+    --destructive: 0 70% 58%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 55% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 222 47% 8%;
+    --border: 222 22% 20%;
+    --input: 222 22% 24%;
+    --ring: 217 91% 62%;
+    --sidebar: 222 38% 9%;
+    --sidebar-foreground: 210 20% 85%;
+  }
+  * { @apply border-border; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { @apply bg-background text-foreground antialiased; font-family: var(--font-sans); font-feature-settings: "cv11", "ss01"; }
+  :focus-visible { @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background; }
+}
+
+@layer utilities {
+  .tabular { font-variant-numeric: tabular-nums; }
+  .scrollbar-thin { scrollbar-width: thin; }
+}
