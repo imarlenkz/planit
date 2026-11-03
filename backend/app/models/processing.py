@@ -96,4 +96,5 @@ class Answer(IdMixin, TimestampMixin, Base):
 
     submission: Mapped[Submission] = relationship(back_populates="answers")
     question = relationship("Question")
-    evaluation: Mapped["Evaluation | None"]  # noqa: F821 = relationship(back_populates="answer", uselist=False, cascade="all, delete-orphan")
+    evaluation: Mapped["Evaluation | None"] = relationship(  # noqa: F821
+        back_populates="answer", uselist=False, cascade="all, delete-orphan")
