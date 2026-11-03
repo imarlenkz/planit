@@ -63,7 +63,7 @@ def parse_number(s: str | float | int | None) -> float | None:
     """Return the last number in a string: 'x = 5' → 5, '3/4' → 0.75, '2,5 см' → 2.5."""
     if s is None:
         return None
-    if isinstance(s, (int, float)):
+    if isinstance(s, int | float):
         return float(s)
     txt = nfc(str(s)).translate(_SUBSCRIPTS).replace("−", "-").replace(" ", " ")
     txt = re.sub(r"(?<=\d) (?=\d{3}\b)", "", txt)  # thousands separator

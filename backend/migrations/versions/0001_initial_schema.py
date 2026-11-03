@@ -179,7 +179,7 @@ def upgrade() -> None:
     sa.Column('quarter', sa.Integer(), nullable=True),
     sa.Column('section', sa.String(length=255), nullable=True),
     sa.Column('topic', sa.String(length=255), nullable=True),
-    sa.Column('date', sa.Date(), nullable=False),
+    sa.Column('date', sa.Date(), nullable=True),
     sa.Column('max_score', sa.Float(), nullable=False),
     sa.Column('status', sa.String(length=16), nullable=False),
     sa.Column('settings', sa.JSON(), nullable=False),

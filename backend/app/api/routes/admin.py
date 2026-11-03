@@ -87,7 +87,7 @@ def _demo_qdef(q: Question) -> dict:
             return d
     ca = q.correct_answer
     val = ca.get("value") if isinstance(ca, dict) and "value" in ca else ca
-    right = [str(val)] if not isinstance(val, (list, dict)) else [", ".join(map(str, val))]
+    right = [str(val)] if not isinstance(val, list | dict) else [", ".join(map(str, val))]
     if q.answer_type in ("single_choice", "multiple_choice"):
         return {"number": q.number, "answer_type": q.answer_type, "correct_answer": ca,
                 "wrong": ["C"] if q.answer_type == "single_choice" else [["B"]]}
