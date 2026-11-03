@@ -88,8 +88,11 @@ test("teacher: create → upload → review → export", async ({ page }) => {
   expect(results.students.length).toBe(subs.length);
 
   await page.goto(`/reports?assessment=${newId}`);
+  // the PDF preview iframe loads first; headless Chromium (no PDF viewer) reports it as a download too,
+  // so wait for it and then pick the Excel download explicitly
+  await expect(page.locator("iframe")).toBeVisible({ timeout: 60_000 });
   const [download] = await Promise.all([
-    page.waitForEvent("download"),
+    page.waitForEvent("download", { predicate: (d) => d.suggestedFilename().endsWith(".xlsx") }),
     page.getByRole("button", { name: "Жүктеп алу" }).first().click(),
   ]);
   expect(download.suggestedFilename()).toMatch(/\.xlsx$/);
