@@ -6,7 +6,11 @@
 #
 # Re-run the same command to update to the latest code (data, .env and certificates are kept).
 # Options (env): DOMAIN (required), EMAIL (Let's Encrypt), BRANCH (default main), DIR (default /opt/planit),
-#                DEMO (true = demo school + demo scan on first start; default true)
+#                DEMO (true = demo school + demo scan on first start; default true),
+#                MODE: standalone (Planit owns ports 80/443) | proxy (an nginx already runs on the host:
+#                      Planit listens on 127.0.0.1:$PORT and a site for $DOMAIN is added to the host nginx).
+#                      Default: proxy when port 80 is already taken, otherwise standalone.
+#                PORT (proxy mode, default 8088)
 set -euo pipefail
 
 DOMAIN="${DOMAIN:?set DOMAIN, e.g. DOMAIN=checker.imarlen.kz}"
@@ -15,6 +19,10 @@ BRANCH="${BRANCH:-main}"
 DIR="${DIR:-/opt/planit}"
 DEMO="${DEMO:-true}"
 REPO="${REPO:-https://github.com/imarlenkz/planit.git}"
+PORT="${PORT:-8088}"
+if [ -z "${MODE:-}" ]; then
+  if ss -ltn 2>/dev/null | grep -qE '[:.]80\s'; then MODE=proxy; else MODE=standalone; fi
+fi
 
 log() { printf '\n\033[1;34m==> %s\033[0m\n' "$*"; }
 [ "$(id -u)" -eq 0 ] || { echo "run as root (sudo)"; exit 1; }
@@ -55,29 +63,97 @@ if [ ! -f .env ]; then
 else
   echo ".env exists - kept"
 fi
+# small servers: fewer processes so the stack fits next to other apps
+MEM_MB=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo)
+if [ "$MEM_MB" -lt 6000 ] && ! grep -q '^PIPELINE_WORKERS=' .env; then
+  sed -i -e "s|^API_WORKERS=.*|API_WORKERS=1|" -e "s|^WORKER_CONCURRENCY=.*|WORKER_CONCURRENCY=1|" .env
+  echo "PIPELINE_WORKERS=2" >> .env
+  echo "low memory (${MEM_MB} MB): 1 API worker, 1 Celery worker, 2 OCR threads"
+fi
 
-log "4/6 Nginx config for $DOMAIN"
-sed -e "s|server_name _;|server_name $DOMAIN;|g" \
-    -e "s|/etc/nginx/tls/fullchain.pem|/etc/letsencrypt/live/$DOMAIN/fullchain.pem|" \
-    -e "s|/etc/nginx/tls/privkey.pem|/etc/letsencrypt/live/$DOMAIN/privkey.pem|" \
-    nginx/prod.conf > nginx/server.conf
-mkdir -p letsencrypt certbot-www
+if [ "$MODE" = "proxy" ]; then
+  log "4/6 Planit on 127.0.0.1:$PORT (host nginx stays in front)"
+  sed -i -e "s|^HTTP_PORT=.*|HTTP_PORT=127.0.0.1:$PORT|" .env
+  grep -q '^HTTP_PORT=' .env || echo "HTTP_PORT=127.0.0.1:$PORT" >> .env
+  COMPOSE="docker compose -f docker-compose.yml"
 
-COMPOSE="docker compose -f docker-compose.yml -f docker-compose.server.yml"
+  log "5/6 Host nginx site + HTTPS for $DOMAIN"
+  if ss -ltn | grep -qE "127.0.0.1:$PORT\s" && ! docker ps --format '{{.Names}}' | grep -q '^planit-nginx'; then
+    echo "port $PORT is already used on this server; re-run with another PORT=..."; exit 1
+  fi
+  OTHER=$(grep -rlE "server_name[^;]*\b$DOMAIN\b" /etc/nginx/sites-enabled/ /etc/nginx/conf.d/ 2>/dev/null | grep -v "/$DOMAIN\$" || true)
+  if [ -n "$OTHER" ]; then
+    echo "$DOMAIN is already served by: $OTHER"
+    echo "Remove or rename that server block first (or use another DOMAIN); nothing was changed in nginx."; exit 1
+  fi
+  command -v nginx >/dev/null || { echo "port 80 is busy but host nginx was not found. Free port 80 and re-run with MODE=standalone, or proxy https://$DOMAIN to 127.0.0.1:$PORT in your web server."; exit 1; }
+  SITE=/etc/nginx/sites-available/$DOMAIN
+  if [ ! -f "$SITE" ]; then
+    cat > "$SITE" <<NGINX
+# Planit ($DOMAIN) -> docker stack on 127.0.0.1:$PORT
+server {
+    listen 80;
+    server_name $DOMAIN;
+    client_max_body_size 200m;
+    client_body_timeout 300s;
 
-log "5/6 HTTPS certificate (Let's Encrypt)"
-if [ ! -f "letsencrypt/live/$DOMAIN/fullchain.pem" ]; then
-  $COMPOSE stop nginx >/dev/null 2>&1 || true
-  docker run --rm -p 80:80 -v "$DIR/letsencrypt:/etc/letsencrypt" certbot/certbot:v2.11.0 \
-    certonly --standalone --non-interactive --agree-tos -m "$EMAIL" -d "$DOMAIN" \
-    || { echo "Certificate failed: check that $DOMAIN has an A record pointing to this server and port 80 is open."; exit 1; }
+    location /api/ws/ {
+        proxy_pass http://127.0.0.1:$PORT;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$host;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_read_timeout 3600s;
+    }
+    location / {
+        proxy_pass http://127.0.0.1:$PORT;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_request_buffering off;
+        proxy_read_timeout 300s;
+    }
+}
+NGINX
+    ln -sf "$SITE" "/etc/nginx/sites-enabled/$DOMAIN"
+  else
+    echo "$SITE exists - kept"
+  fi
+  nginx -t && systemctl reload nginx
+  if ! grep -q "ssl_certificate" "$SITE"; then
+    command -v certbot >/dev/null || { apt-get update -y && apt-get install -y certbot python3-certbot-nginx; }
+    certbot --nginx --non-interactive --agree-tos --redirect -m "$EMAIL" -d "$DOMAIN" \
+      || { echo "Certificate failed: check that $DOMAIN has an A record pointing to this server."; exit 1; }
+  else
+    echo "HTTPS already configured for $DOMAIN"
+  fi
 else
-  echo "certificate exists - kept (renewed automatically by the certbot service)"
+  log "4/6 Nginx config for $DOMAIN"
+  sed -e "s|server_name _;|server_name $DOMAIN;|g" \
+      -e "s|/etc/nginx/tls/fullchain.pem|/etc/letsencrypt/live/$DOMAIN/fullchain.pem|" \
+      -e "s|/etc/nginx/tls/privkey.pem|/etc/letsencrypt/live/$DOMAIN/privkey.pem|" \
+      nginx/prod.conf > nginx/server.conf
+  mkdir -p letsencrypt certbot-www
+  COMPOSE="docker compose -f docker-compose.yml -f docker-compose.server.yml"
+
+  log "5/6 HTTPS certificate (Let's Encrypt)"
+  if [ ! -f "letsencrypt/live/$DOMAIN/fullchain.pem" ]; then
+    $COMPOSE stop nginx >/dev/null 2>&1 || true
+    docker run --rm -p 80:80 -v "$DIR/letsencrypt:/etc/letsencrypt" certbot/certbot:v2.11.0 \
+      certonly --standalone --non-interactive --agree-tos -m "$EMAIL" -d "$DOMAIN" \
+      || { echo "Certificate failed: check that $DOMAIN has an A record pointing to this server and port 80 is open."; exit 1; }
+  else
+    echo "certificate exists - kept (renewed automatically by the certbot service)"
+  fi
 fi
 
 log "6/6 Build and start (the first build takes several minutes)"
 $COMPOSE up -d --build --remove-orphans
-echo "waiting for the API..."
+echo "waiting for the API (first start also processes the demo scan)..."
 for _ in $(seq 1 120); do
   if curl -fsS "https://$DOMAIN/api/health" >/dev/null 2>&1; then break; fi
   sleep 5
