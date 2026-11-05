@@ -157,6 +157,19 @@ Nginx `/api/ws/` арқылы WebSocket (өңдеу прогресі) прокс
 
 ## 8. Production deployment
 
+### Бір VPS-ке бір командамен (HTTPS-пен)
+
+Доменнің A жазбасын серверге бағыттаңыз, 80/443 порттарын ашыңыз (сервер: Ubuntu 22.04+/Debian 12, ≥ 2 ядро, ≥ 4 ГБ RAM), содан кейін серверде:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/imarlenkz/planit/main/deploy/install.sh \
+  | sudo DOMAIN=checker.imarlen.kz EMAIL=you@example.com bash
+```
+
+Скрипт Docker-ді орнатады, кодты `/opt/planit`-ке алады, құпиялары генерацияланған `.env` жасайды, Let's Encrypt сертификатын алады (автоматты жаңартумен), образдарды серверде жинап, стекті іске қосады. Жаңарту үшін сол команданы қайта іске қосыңыз — деректер, `.env` және сертификаттар сақталады. Демо деректерсіз орнату: `DEMO=false`.
+
+### Registry образдары арқылы (CI/CD)
+
 1. Серверде `/opt/planit` каталогын жасап, `.env` файлын толтырыңыз: `ENVIRONMENT=production`, күшті `SECRET_KEY`, `COOKIE_SECURE=true`, `FRONTEND_ORIGINS=https://your.domain`, `SEED_DEMO=false`, `STORAGE_ENCRYPTION_KEY`, дерекқор құпиясөздері.
 2. TLS сертификаттарын `nginx/tls/fullchain.pem` және `nginx/tls/privkey.pem` ретінде орналастырыңыз.
 3. Іске қосу:

@@ -16,3 +16,6 @@ out/
 frontend/test-results/
 frontend/playwright-report/
 *.tsbuildinfo
+letsencrypt/
+certbot-www/
+nginx/server.conf
