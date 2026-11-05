@@ -1,4 +1,6 @@
 """`python -m app.seed [--run-demo]` — seed the demo school; optionally push the demo scan through the real pipeline.
+`python -m app.seed purge` — delete the demo school, its data and the demo accounts.
+`python -m app.seed create-admin EMAIL [PASSWORD]` — create the first administrator (no-op when one exists).
 
 --run-demo (or DEMO_AUTORUN=true) generates the phone-photo-like demo PDF for the main Math БЖБ and processes it
 synchronously, so a fresh deployment opens with real OCR + AI results ready for review.
@@ -38,6 +40,17 @@ def run_demo(db, assessment_id: int) -> None:
 if __name__ == "__main__":
     db = SessionLocal()
     try:
+        if sys.argv[1:2] == ["purge"]:
+            from app.seed.purge import purge_demo
+            print("Demo data removed:", purge_demo(db))
+            sys.exit(0)
+        if sys.argv[1:2] == ["create-admin"]:
+            from app.seed.purge import create_admin
+            if len(sys.argv) < 3:
+                sys.exit("usage: python -m app.seed create-admin EMAIL [PASSWORD]")
+            pw = create_admin(db, sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else None)
+            print(f"Administrator created: {sys.argv[2]} / {pw}" if pw else "An administrator already exists; nothing created")
+            sys.exit(0)
         out = seed_demo(db)
         print("Demo data:", out)
         print(f"Logins (password {DEMO_PASSWORD}): teacher@planit.kz, director@planit.kz, admin@planit.kz, student@planit.kz")

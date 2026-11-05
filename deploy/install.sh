@@ -6,7 +6,8 @@
 #
 # Re-run the same command to update to the latest code (data, .env and certificates are kept).
 # Options (env): DOMAIN (required), EMAIL (Let's Encrypt), BRANCH (default main), DIR (default /opt/planit),
-#                DEMO (true = demo school + demo scan on first start; default true),
+#                DEMO (true = demo school + demo scan, for trials only; default false: any demo data is removed),
+#                ADMIN_EMAIL (first administrator, created once when none exists; default $EMAIL),
 #                MODE: standalone (Planit owns ports 80/443) | proxy (an nginx already runs on the host:
 #                      Planit listens on 127.0.0.1:$PORT and a site for $DOMAIN is added to the host nginx).
 #                      Default: proxy when port 80 is already taken, otherwise standalone.
@@ -19,7 +20,8 @@ DOMAIN="${DOMAIN:?set DOMAIN, e.g. DOMAIN=checker.imarlen.kz}"
 EMAIL="${EMAIL:-admin@${DOMAIN#*.}}"
 BRANCH="${BRANCH:-main}"
 DIR="${DIR:-/opt/planit}"
-DEMO="${DEMO:-true}"
+DEMO="${DEMO:-false}"
+ADMIN_EMAIL="${ADMIN_EMAIL:-$EMAIL}"
 REPO="${REPO:-https://github.com/imarlenkz/planit.git}"
 PORT="${PORT:-8088}"
 if [ -z "${MODE:-}" ]; then
@@ -64,6 +66,7 @@ if [ ! -f .env ]; then
   echo "created .env with generated secrets: $DIR/.env (add AI keys there later if needed)"
 else
   echo ".env exists - kept"
+  sed -i -e "s|^SEED_DEMO=.*|SEED_DEMO=$DEMO|" -e "s|^DEMO_AUTORUN=.*|DEMO_AUTORUN=$DEMO|" .env
 fi
 # PUBLIC_URL is needed by the iMARLEN ID sign-in redirect
 grep -q '^PUBLIC_URL=' .env || echo "PUBLIC_URL=" >> .env
@@ -171,9 +174,13 @@ for _ in $(seq 1 120); do
   sleep 5
 done
 $COMPOSE ps
+if [ "$DEMO" != "true" ]; then
+  $COMPOSE exec -T backend python -m app.seed purge || true
+  $COMPOSE exec -T backend python -m app.seed create-admin "$ADMIN_EMAIL" || true
+fi
 if curl -fsS "https://$DOMAIN/api/health"; then
   printf '\n\n\033[1;32mPlanit is running: https://%s\033[0m\n' "$DOMAIN"
-  if [ "$DEMO" = "true" ]; then echo "Demo login: teacher@planit.kz / demo12345 (set DEMO=false for real use)"; fi
+  if [ "$DEMO" = "true" ]; then echo "Demo login: teacher@planit.kz / demo12345 (trial only)"; fi
 else
   echo "API is not healthy yet. Logs: cd $DIR && $COMPOSE logs --tail 100 backend"
 fi

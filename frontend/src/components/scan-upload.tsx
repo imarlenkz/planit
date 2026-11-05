@@ -1,5 +1,5 @@
 "use client";
-import { Camera, CheckCircle2, FileDown, FileUp, Loader2, Play, QrCode, Sparkles, UploadCloud, X, XCircle } from "lucide-react";
+import { Camera, CheckCircle2, FileDown, FileUp, Loader2, Play, QrCode, UploadCloud, X, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -104,7 +104,6 @@ export function ScanUpload({ assessment, onDone }: { assessment: any; onDone: ()
   const [drag, setDrag] = useState(false);
   const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [jobId, setJobId] = useState<number | null>(null);
-  const [demoBusy, setDemoBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const camRef = useRef<HTMLInputElement>(null);
   const job = useJobProgress(jobId, (j) => {
@@ -147,17 +146,7 @@ export function ScanUpload({ assessment, onDone }: { assessment: any; onDone: ()
     xhr.send(fd);
   }
 
-  async function runDemo() {
-    setDemoBusy(true);
-    try {
-      const j = await api(`/demo/run/${assessment.id}`, { method: "POST" });
-      setJobId(j.id);
-    } catch (e: any) {
-      toast.error(e.message);
-    } finally {
-      setDemoBusy(false);
-    }
-  }
+
 
   const busy = uploadPct !== null && (!job || (job.status !== "done" && job.status !== "failed"));
   const noKey = !assessment.questions?.length;
@@ -217,16 +206,6 @@ export function ScanUpload({ assessment, onDone }: { assessment: any; onDone: ()
           <CardContent className="grid gap-2">
             <Button variant="outline" disabled={noKey} onClick={() => download(`/api/assessments/${assessment.id}/template.pdf?mode=students`)}><FileDown /> {t("scan.templateStudents")}</Button>
             <Button variant="outline" disabled={noKey} onClick={() => download(`/api/assessments/${assessment.id}/template.pdf?mode=blank`)}><FileDown /> {t("scan.templateBlank")}</Button>
-          </CardContent>
-        </Card>
-        <Card className="border-primary/30 bg-primary/[0.03]">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Sparkles className="size-4 text-primary" /> {t("scan.demo")}</CardTitle>
-            <CardDescription>{t("scan.demoHint")}</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-2">
-            <Button onClick={runDemo} loading={demoBusy} disabled={noKey || busy}><Play /> {t("scan.demo")}</Button>
-            <Button variant="ghost" size="sm" disabled={noKey} onClick={() => download(`/api/demo/sample-scan/${assessment.id}`)}><FileDown /> {t("scan.demoDownload")}</Button>
           </CardContent>
         </Card>
         {jobs?.length ? (

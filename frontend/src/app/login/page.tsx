@@ -9,12 +9,6 @@ import { useAuth } from "@/lib/auth";
 import { useI18n, type Locale, type MessageKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-const DEMO = [
-  ["teacher@planit.kz", "role.teacher"],
-  ["director@planit.kz", "role.school_admin"],
-  ["admin@planit.kz", "role.admin"],
-  ["student@planit.kz", "role.student"],
-] as const;
 const SSO_ERRORS = ["school", "conflict", "disabled", "role", "state", "denied", "off", "error"];
 
 const GRID_BACKDROP: CSSProperties = {
@@ -61,7 +55,7 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
-  const [status, setStatus] = useState<{ enabled: boolean; demo: boolean } | null>(null);
+  const [status, setStatus] = useState<{ enabled: boolean } | null>(null);
   const [mounted, setMounted] = useState(false);
   const ssoCode = params.get("sso") ?? "";
   const ssoError = SSO_ERRORS.includes(ssoCode) ? t(`sso.${ssoCode}` as MessageKey) : null;
@@ -70,14 +64,8 @@ function LoginForm() {
     setMounted(true);
     fetch("/api/auth/sso/status", { credentials: "include" })
       .then((r) => (r.ok ? r.json() : null))
-      .then((s) => {
-        setStatus(s ?? { enabled: false, demo: false });
-        if (s?.demo) {
-          setEmail((e) => e || "teacher@planit.kz");
-          setPassword((p) => p || "demo12345");
-        }
-      })
-      .catch(() => setStatus({ enabled: false, demo: false }));
+      .then((s) => setStatus(s ?? { enabled: false }))
+      .catch(() => setStatus({ enabled: false }));
   }, []);
 
   async function submit(e: React.FormEvent) {
@@ -196,25 +184,6 @@ function LoginForm() {
             </Button>
           </form>
 
-          {status?.demo && (
-            <div className="mt-6 space-y-2 rounded-xl border border-white/10 bg-white/[.03] p-3">
-              <p className="font-mono-label text-[10px] text-brand-400">{t("auth.demo")} · demo12345</p>
-              <div className="grid grid-cols-2 gap-2">
-                {DEMO.map(([e, r]) => (
-                  <button
-                    key={e}
-                    type="button"
-                    onClick={() => { setEmail(e); setPassword("demo12345"); }}
-                    className={cn("rounded-lg border px-2 py-1.5 text-left text-xs transition-colors hover:border-brand-500",
-                      email === e ? "border-brand-500 bg-brand-500/10" : "border-white/10")}
-                  >
-                    <span className="block font-semibold text-white">{t(r)}</span>
-                    <span className="block truncate text-white/45">{e}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

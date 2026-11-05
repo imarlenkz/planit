@@ -62,7 +62,12 @@ def health(db: Session = Depends(get_db)):
             "ocr": settings.OCR_PROVIDER, "ai": settings.AI_PROVIDER, "demo": settings.SEED_DEMO}
 
 
-# ---------- demo flow ----------
+# ---------- demo flow (only on demo deployments, SEED_DEMO=true) ----------
+def _demo_only() -> None:
+    if not settings.SEED_DEMO:
+        raise HTTPException(404, "Not found")
+
+
 def _demo_pdf(db: Session, assessment_id: int, user: User) -> bytes:
     from app.api.routes.assessments import default_version, ensure_layout, template_meta
     from app.seed.demo_scans import generate_demo_scan
@@ -96,6 +101,7 @@ def _demo_qdef(q: Question) -> dict:
 
 @router.get("/demo/sample-scan/{assessment_id}")
 def demo_sample_scan(assessment_id: int, request: Request, db: Session = Depends(get_db), user: User = Depends(staff)):
+    _demo_only()
     """A realistic 'scanned' PDF of the whole class (QR sheets filled in, rotated, shadowed, noisy)."""
     pdf = _demo_pdf(db, assessment_id, user)
     audit(db, user, "demo.sample_scan", "assessment", assessment_id, request=request, commit=True)
@@ -106,6 +112,7 @@ def demo_sample_scan(assessment_id: int, request: Request, db: Session = Depends
 @router.post("/demo/run/{assessment_id}", status_code=202)
 def demo_run(assessment_id: int, request: Request, db: Session = Depends(get_db), user: User = Depends(staff)):
     """One click: generate the demo scan and push it through the real pipeline."""
+    _demo_only()
     from app.api.routes.processing import create_job, job_out
 
     a = get_assessment_or_404(db, user, assessment_id, write=True)

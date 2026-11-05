@@ -95,7 +95,7 @@ jobs:
       - name: Start stack with demo data
         run: |
           cp .env.example .env
-          sed -i 's/^DEMO_AUTORUN=.*/DEMO_AUTORUN=false/' .env
+          sed -i 's/^SEED_DEMO=.*/SEED_DEMO=true/' .env
           docker compose up -d --build
           timeout 600 bash -c 'until curl -sf http://localhost/api/health; do sleep 5; done'
       - uses: actions/setup-node@v4

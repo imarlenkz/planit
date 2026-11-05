@@ -176,7 +176,7 @@ def provision(db: Session, c: dict[str, Any]) -> User:
 
 @router.get("/status")
 def status() -> dict:
-    return {"enabled": enabled(), "demo": settings.SEED_DEMO}
+    return {"enabled": enabled()}
 
 
 @router.get("/login")
