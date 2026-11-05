@@ -11,6 +11,7 @@ import { Field, Input, Select } from "@/components/ui/input";
 import { EmptyState, ErrorState, PageHeader, Skeleton } from "@/components/ui/misc";
 import { Pagination, Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { api } from "@/lib/api";
+import { UstazImport } from "@/components/ustaz-import";
 import { useApi, useDebounced } from "@/lib/hooks";
 import { useI18n } from "@/lib/i18n";
 import { download } from "@/lib/utils";
@@ -79,7 +80,7 @@ function Inner() {
   const [editing, setEditing] = useState<any | null>(null);
   const [purge, setPurge] = useState<any | null>(null);
   const historyId = params.get("student");
-  const { data: classes } = useApi<any[]>("/classes");
+  const { data: classes, reload: reloadClasses } = useApi<any[]>("/classes");
   const { data, error, loading, reload } = useApi<any>(`/students?page=${page}&size=25${classId ? `&class_id=${classId}` : ""}${dq ? `&q=${encodeURIComponent(dq)}` : ""}`);
 
   const doPurge = async () => {
@@ -93,7 +94,7 @@ function Inner() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("nav.students")} actions={<Button onClick={() => setEditing({})}><Plus /> {t("stu.new")}</Button>} />
+      <PageHeader title={t("nav.students")} actions={<div className="flex flex-wrap gap-2"><UstazImport onDone={() => { reloadClasses(); reload(); }} /><Button onClick={() => setEditing({})}><Plus /> {t("stu.new")}</Button></div>} />
       <div className="flex flex-wrap gap-2">
         <Input className="w-full sm:w-72" placeholder={t("common.search")} value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} />
         <Select className="w-full sm:w-48" value={classId} onChange={(e) => { setClassId(e.target.value); setPage(1); }}>

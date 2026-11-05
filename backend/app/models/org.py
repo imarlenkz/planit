@@ -59,6 +59,8 @@ class SchoolClass(IdMixin, TimestampMixin, Base):
     grade: Mapped[int] = mapped_column(Integer)
     letter: Mapped[str | None] = mapped_column(String(5))
     academic_year: Mapped[str] = mapped_column(String(9), default="2026-2027")
+    # id of the same class in an external system, e.g. "ustaz:123" (Ustaz student import)
+    external_ref: Mapped[str | None] = mapped_column(String(64), index=True)
     homeroom_teacher_id: Mapped[int | None] = mapped_column(PK, ForeignKey("teachers.id", ondelete="SET NULL"))
 
     students: Mapped[list["Student"]] = relationship(back_populates="school_class", order_by="Student.full_name")
@@ -83,5 +85,7 @@ class Student(IdMixin, TimestampMixin, Base):
     gender: Mapped[str | None] = mapped_column(String(1))
     student_code: Mapped[str] = mapped_column(String(32), unique=True, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # id of the same student in an external system, e.g. "ustaz:456" (Ustaz student import)
+    external_ref: Mapped[str | None] = mapped_column(String(64), index=True)
 
     school_class: Mapped[SchoolClass | None] = relationship(back_populates="students")

@@ -39,6 +39,11 @@ class Settings(BaseSettings):
     # create a school from the iMARLEN ID claims when no school has a matching idp_code
     IID_AUTO_CREATE_SCHOOL: bool = True
 
+    # Ustaz (ustaz.imarlen.kz) student import: GET {USTAZ_API_URL}/integration/planit/roster with
+    # X-Integration-Key. The key equals PLANIT_INTEGRATION_KEY in Ustaz. Empty key = the import is off.
+    USTAZ_API_URL: str = "https://ustaz.imarlen.kz/api"
+    USTAZ_INTEGRATION_KEY: str = ""
+
     # Storage
     STORAGE_BACKEND: Literal["local", "s3"] = "local"
     STORAGE_LOCAL_PATH: str = "./data/storage"

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Field, Input, Select } from "@/components/ui/input";
 import { EmptyState, ErrorState, PageHeader, Skeleton } from "@/components/ui/misc";
+import { UstazImport } from "@/components/ustaz-import";
 import { api } from "@/lib/api";
 import { useApi } from "@/lib/hooks";
 import { useI18n } from "@/lib/i18n";
@@ -54,7 +55,7 @@ export default function ClassesPage() {
   const { data, error, loading, reload } = useApi<any[]>("/classes");
   return (
     <div className="space-y-6">
-      <PageHeader title={t("nav.classes")} actions={<NewClass onDone={reload} />} />
+      <PageHeader title={t("nav.classes")} actions={<div className="flex flex-wrap gap-2"><UstazImport onDone={reload} /><NewClass onDone={reload} /></div>} />
       {error ? <ErrorState message={error.message} onRetry={reload} retryLabel={t("common.retry")} /> : loading && !data ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-32" />)}</div>
       ) : !data?.length ? <EmptyState title={t("common.empty")} /> : (
