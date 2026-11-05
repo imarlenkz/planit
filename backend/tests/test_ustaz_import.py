@@ -119,3 +119,38 @@ def test_fetch_roster_sends_key(monkeypatch):
     with pytest.raises(ustaz.UstazError) as e:
         ustaz.fetch_roster("s51")
     assert e.value.status == 404
+
+
+def test_platform_admin_picks_school_by_code(roster, db):
+    data, seen = roster
+    c = login("admin@planit.kz")
+    admin = db.scalar(select(User).where(User.email == "admin@planit.kz"))
+    assert admin.role == "admin"
+    # schools with a code are offered; with one such school it is the default, otherwise the admin picks
+    codes = [s["idp_code"] for s in c.get("/api/integrations/ustaz/status").json()["schools"]]
+    assert "s51-test" in codes
+    r = c.get("/api/integrations/ustaz/roster")
+    assert r.status_code == (200 if len(codes) == 1 else 400), r.text
+    r = c.get("/api/integrations/ustaz/roster", params={"school_code": "S51-TEST"})
+    assert r.status_code == 200, r.text
+    assert r.json()["school_code"] == "s51-test" and r.json()["planit_school_id"] is not None
+
+    # a school Planit does not have yet: listed from Ustaz, created on import
+    r = c.get("/api/integrations/ustaz/roster", params={"school_code": "new-77"})
+    assert r.status_code == 200 and r.json()["planit_school_id"] is None and seen[-1] == "new-77"
+    data["school"]["name"] = "№77 мектеп"
+    r = c.post("/api/integrations/ustaz/import", json={"student_ids": [1], "school_code": "new-77"})
+    assert r.status_code == 200, r.text
+    assert r.json()["created"] == 1 and r.json()["classes_created"] == 1
+    db.expire_all()
+    school = db.scalar(select(School).where(School.idp_code == "new-77"))
+    assert school and school.name == "№77 мектеп"
+    st = db.scalar(select(Student).where(Student.school_id == school.id))
+    assert st.full_name == "Әлиев Нұрлан" and st.school_class.school_id == school.id
+
+
+def test_teacher_cannot_pick_other_school(roster):
+    data, seen = roster
+    c = login("teacher@planit.kz")
+    assert c.get("/api/integrations/ustaz/roster", params={"school_code": "other"}).status_code == 200
+    assert seen[-1] == "s51-test"

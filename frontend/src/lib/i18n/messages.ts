@@ -365,6 +365,9 @@ export const kk = {
   "ustaz.linked": "{n} бар оқушы байланыстырылды",
   "ustaz.updated": "{n} жаңартылды",
   "ustaz.classesCreated": "{n} жаңа сынып",
+  "ustaz.schoolCode": "Мектеп коды (мыс. s51)",
+  "ustaz.load": "Жүктеу",
+  "ustaz.schoolHint": "iMARLEN ID-дағы мектеп коды",
 };
 
 export type MessageKey = keyof typeof kk;
@@ -527,6 +530,9 @@ export const ru: Dict = {
   "ustaz.linked": "связано существующих: {n}",
   "ustaz.updated": "обновлено: {n}",
   "ustaz.classesCreated": "новых классов: {n}",
+  "ustaz.schoolCode": "Код школы (напр. s51)",
+  "ustaz.load": "Загрузить",
+  "ustaz.schoolHint": "Код школы в iMARLEN ID",
 };
 
 export const en: Dict = {
@@ -679,6 +685,9 @@ export const en: Dict = {
   "ustaz.linked": "{n} existing linked",
   "ustaz.updated": "{n} updated",
   "ustaz.classesCreated": "{n} new classes",
+  "ustaz.schoolCode": "School code (e.g. s51)",
+  "ustaz.load": "Load",
+  "ustaz.schoolHint": "The school's iMARLEN ID code",
 };
 
 export const MESSAGES = { kk, ru, en } as const;

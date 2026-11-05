@@ -1,6 +1,6 @@
 "use client";
 import { ChevronDown, ChevronRight, Download, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,13 +8,30 @@ import { Dialog, DialogContent, DialogFooter, DialogTrigger } from "@/components
 import { Input, Switch } from "@/components/ui/input";
 import { ErrorState, Skeleton } from "@/components/ui/misc";
 import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { useApi } from "@/lib/hooks";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 type UStudent = { id: number; full_name: string; gender: string | null; imported: boolean; planit_class: string | null };
 type UClass = { id: number; name: string; planit_class_id: number | null; planit_class_name: string | null; students: UStudent[] };
-type Roster = { school?: { name?: string }; year?: string; classes: UClass[] };
+type Roster = { school?: { name?: string }; school_code?: string; year?: string; classes: UClass[] };
+
+/** Platform admins belong to no school: they choose which school (iMARLEN ID code) to import. */
+function SchoolCode({ value, onApply }: { value: string; onApply: (code: string) => void }) {
+  const { t } = useI18n();
+  const { data } = useApi<{ schools?: { id: number; name: string; idp_code: string }[] }>("/integrations/ustaz/status");
+  const [v, setV] = useState(value);
+  useEffect(() => setV(value), [value]);
+  return (
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <Input list="ustaz-schools" className="font-mono sm:w-56" value={v} onChange={(e) => setV(e.target.value)} placeholder={t("ustaz.schoolCode")} aria-label={t("ustaz.schoolCode")} onKeyDown={(e) => { if (e.key === "Enter" && v.trim()) onApply(v.trim()); }} />
+      <datalist id="ustaz-schools">{data?.schools?.map((s) => <option key={s.id} value={s.idp_code}>{s.name}</option>)}</datalist>
+      <Button variant="outline" disabled={!v.trim() || v.trim() === value} onClick={() => onApply(v.trim())}>{t("ustaz.load")}</Button>
+      <span className="text-xs text-muted-foreground">{t("ustaz.schoolHint")}</span>
+    </div>
+  );
+}
 
 function Check({ state, onChange, label }: { state: boolean | "mixed"; onChange: (v: boolean) => void; label: string }) {
   return (
@@ -32,7 +49,10 @@ function Check({ state, onChange, label }: { state: boolean | "mixed"; onChange:
 
 function Picker({ onDone }: { onDone: () => void }) {
   const { t } = useI18n();
-  const { data, error, loading, reload } = useApi<Roster>("/integrations/ustaz/roster");
+  const { user } = useAuth();
+  const platformAdmin = user?.role === "admin";
+  const [code, setCode] = useState("");
+  const { data, error, loading, reload } = useApi<Roster>(`/integrations/ustaz/roster${code ? `?school_code=${encodeURIComponent(code)}` : ""}`);
   const [picked, setPicked] = useState<Set<number>>(new Set());
   const [open, setOpen] = useState<Set<number>>(new Set());
   const [q, setQ] = useState("");
@@ -66,7 +86,7 @@ function Picker({ onDone }: { onDone: () => void }) {
   const run = async () => {
     setBusy(true);
     try {
-      const r = await api<any>("/integrations/ustaz/import", { method: "POST", json: { student_ids: [...picked] } });
+      const r = await api<any>("/integrations/ustaz/import", { method: "POST", json: { student_ids: [...picked], school_code: platformAdmin ? data?.school_code ?? (code || null) : null } });
       const parts = [t("ustaz.created", { n: r.created })];
       if (r.linked) parts.push(t("ustaz.linked", { n: r.linked }));
       if (r.updated) parts.push(t("ustaz.updated", { n: r.updated }));
@@ -80,11 +100,14 @@ function Picker({ onDone }: { onDone: () => void }) {
     }
   };
 
-  if (error) return <ErrorState message={error.message} onRetry={reload} retryLabel={t("common.retry")} />;
-  if (loading && !data) return <div className="space-y-2">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-10" />)}</div>;
+  const apply = (c: string) => { setPicked(new Set()); setCode(c); };
+  const codeRow = platformAdmin ? <SchoolCode value={data?.school_code ?? code} onApply={apply} /> : null;
+  if (error) return <>{codeRow}<ErrorState message={error.message} onRetry={reload} retryLabel={t("common.retry")} /></>;
+  if (loading && !data) return <>{codeRow}<div className="space-y-2">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-10" />)}</div></>;
 
   return (
     <>
+      {codeRow}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
