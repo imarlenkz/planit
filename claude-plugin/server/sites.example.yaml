@@ -1,0 +1,118 @@
+# Claude қосылатын сайттар тізімі.
+# Көшірме жасаңыз: cp sites.example.yaml sites.yaml
+# ${VAR} мәндері .env файлынан алынады — құпиясөздерді осы файлға жазбаңыз.
+#
+# Әр сайтта:
+#   base_url     — сайт мекенжайы
+#   auth         — API-ге қалай кіру: none | bearer | header | login
+#   tools        — Claude шақыра алатын API әрекеттері (GET = тек оқу, басқасы = өзгерту)
+#   widget       — сайттағы чат-көмекші (келушілерге). Тек `widget: true` және GET құралдары беріледі.
+#   fetch_pages  — сайттың кез келген бетін мәтін ретінде оқу (әдепкі: true)
+
+sites:
+  planit:
+    name: Planit
+    base_url: https://checker.imarlen.kz
+    description: >-
+      Planit — БЖБ/ТЖБ қағаз жұмыстарын AI көмегімен тексеретін платформа мұғалімдерге арналған.
+    auth:
+      type: login                 # бот аккаунтымен кіріп, access_token алады
+      url: /api/auth/login
+      email: ${PLANIT_BOT_EMAIL}
+      password: ${PLANIT_BOT_PASSWORD}
+      token_field: access_token
+    tools:
+      - name: dashboard
+        description: Мектеп/мұғалім бойынша жалпы аналитика (жұмыс саны, орташа балл, тексеру кезегі).
+        path: /api/analytics/dashboard
+      - name: list_assessments
+        description: БЖБ/ТЖБ тізімі. Іздеу және сүзгі қолдайды.
+        path: /api/assessments
+        params:
+          q: {type: string, description: Атауы бойынша іздеу}
+          type: {type: string, enum: [BZhB, TZhB, AB], description: "БЖБ, ТЖБ немесе АБ"}
+          status: {type: string}
+          class_id: {type: integer}
+      - name: get_assessment
+        description: Бір жұмыстың толық мәліметі (сұрақтар, кілт).
+        path: /api/assessments/{assessment_id}
+        params:
+          assessment_id: {type: integer}
+      - name: assessment_results
+        description: Жұмыс бойынша оқушылардың нәтижелері.
+        path: /api/assessments/{assessment_id}/results
+        params:
+          assessment_id: {type: integer}
+      - name: assessment_analytics
+        description: Жұмыс бойынша сұрақ/мақсат талдауы.
+        path: /api/analytics/assessments/{assessment_id}
+        params:
+          assessment_id: {type: integer}
+      - name: review_queue
+        description: Мұғалім тексеруін күтіп тұрған жауаптар кезегі.
+        path: /api/review/queue
+      - name: list_classes
+        description: Сыныптар тізімі.
+        path: /api/classes
+      - name: approve_confident
+        description: Жұмыстағы AI сенімді бағалаған жауаптарды бір рет бекіту (деректі өзгертеді).
+        method: POST
+        path: /api/assessments/{assessment_id}/approve-confident
+        params:
+          assessment_id: {type: integer}
+    widget:
+      enabled: true
+      origins: [https://checker.imarlen.kz]
+      title: Planit көмекшісі
+      greeting: Сәлеметсіз бе! Planit-ті қалай қолдануды сұраңыз.
+      color: "#2f9e6e"
+      system_prompt: >-
+        Келушілерге Planit-ке кіру, БЖБ құру, сканерлерді жүктеу және нәтижелерді көру жолын түсіндір.
+        Оқушылардың жеке деректерін ешқашан айтпа.
+
+  iid:
+    name: iMARLEN ID
+    base_url: https://id.imarlen.kz
+    description: Барлық iMARLEN сайттарына ортақ кіру (SSO).
+    widget:
+      enabled: false
+
+  # Басқа сайттар — әзірге тек беттерін оқу + чат-виджет.
+  # API-лері болса, planit сияқты `auth` пен `tools` қосыңыз.
+  ustaz:
+    name: Ustaz
+    base_url: https://ustaz.imarlen.kz
+    widget:
+      enabled: true
+      origins: [https://ustaz.imarlen.kz]
+      title: Ustaz көмекшісі
+  testileu:
+    name: Testileu
+    base_url: https://testileu.imarlen.kz
+    widget:
+      enabled: true
+      origins: [https://testileu.imarlen.kz]
+  engame:
+    name: EnGame
+    base_url: https://engame.imarlen.kz
+    widget: {enabled: true, origins: [https://engame.imarlen.kz]}
+  iengl:
+    name: iEngl
+    base_url: https://iengl.imarlen.kz
+    widget: {enabled: true, origins: [https://iengl.imarlen.kz]}
+  zoomera:
+    name: Zoomera
+    base_url: https://zoomera.imarlen.kz
+    widget: {enabled: true, origins: [https://zoomera.imarlen.kz]}
+  mario:
+    name: Mario
+    base_url: https://mario.imarlen.kz
+    widget: {enabled: true, origins: [https://mario.imarlen.kz]}
+  scheduling:
+    name: Scheduling
+    base_url: https://scheduling.imarlen.kz
+    widget: {enabled: true, origins: [https://scheduling.imarlen.kz]}
+  nexus:
+    name: Nexus
+    base_url: https://nexus.imarlen.kz
+    widget: {enabled: true, origins: [https://nexus.imarlen.kz]}

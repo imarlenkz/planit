@@ -1,0 +1,13 @@
+# iMARLEN Claude — бір сервис: MCP (Claude қолданбалары үшін) + сайттағы чат-виджет.
+# Іске қосу:  cp .env.example .env && cp server/sites.example.yaml sites.yaml && docker compose up -d --build
+services:
+  claude:
+    build: ./server
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      SITES_FILE: /config/sites.yaml
+    volumes:
+      - ./sites.yaml:/config/sites.yaml:ro
+    ports:
+      - "127.0.0.1:8090:8090"   # тек host nginx арқылы

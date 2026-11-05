@@ -1,0 +1,16 @@
+{
+  "name": "imarlen",
+  "owner": {
+    "name": "Marlen"
+  },
+  "metadata": {
+    "description": "Marlen-нің сайттарына арналған Claude плагиндері"
+  },
+  "plugins": [
+    {
+      "name": "imarlen-sites",
+      "source": "./claude-plugin/plugin",
+      "description": "Claude-ты iMARLEN сайттарына қосатын MCP плагин."
+    }
+  ]
+}

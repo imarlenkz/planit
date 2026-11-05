@@ -1,0 +1,8 @@
+{
+  "name": "imarlen-sites",
+  "version": "0.1.0",
+  "description": "Claude-ты iMARLEN сайттарына (Planit, iMARLEN ID, Ustaz, Testileu т.б.) қосады: беттерді оқу, Planit API арқылы жұмыстар мен нәтижелерді көру.",
+  "author": { "name": "Marlen" },
+  "homepage": "https://github.com/imarlenkz/planit/tree/main/claude-plugin",
+  "keywords": ["imarlen", "planit", "mcp"]
+}

@@ -1,0 +1,4 @@
+.env
+sites.yaml
+__pycache__/
+.pytest_cache/
