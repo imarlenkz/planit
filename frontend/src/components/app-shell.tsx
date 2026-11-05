@@ -189,7 +189,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <UserMenu />
           </div>
         </header>
-        <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 md:px-6 md:py-8">{children}</main>
+        <main className="mx-auto w-full min-w-0 max-w-[1400px] flex-1 px-4 py-6 md:px-6 md:py-8">{children}</main>
       </div>
     </div>
   );

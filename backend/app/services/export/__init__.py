@@ -170,9 +170,15 @@ def pdf_report(data: dict, school: str, teacher: str) -> bytes:
     muted = ParagraphStyle("m", parent=base, textColor=colors.HexColor("#5B6B7C"))
     primary = colors.HexColor("#1F3A5F")
 
+    hdr = ParagraphStyle("hdr", parent=base, fontName="Sans-Bold", fontSize=7.5, leading=9.5,
+                         textColor=colors.white, alignment=1)
+
     def table(rows, widths, zebra=True):
+        # header cells wrap instead of overflowing narrow columns
+        rows = [[Paragraph(str(c), hdr) if isinstance(c, str) else c for c in rows[0]], *rows[1:]]
         t = Table(rows, colWidths=widths, repeatRows=1)
         st = [("FONT", (0, 0), (-1, -1), "Sans", 8.5), ("FONT", (0, 0), (-1, 0), "Sans-Bold", 8.5),
+              ("LEFTPADDING", (0, 0), (-1, 0), 2), ("RIGHTPADDING", (0, 0), (-1, 0), 2),
               ("BACKGROUND", (0, 0), (-1, 0), primary), ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
               ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#C9D2DC")), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
               ("ALIGN", (2, 0), (-1, -1), "CENTER")]

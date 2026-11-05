@@ -116,7 +116,7 @@ export default function SubmissionReview() {
         <Button variant="success" onClick={approve} loading={busy} disabled={!sub.student_id || sub.status === "approved"}><CheckCheck /> {t("review.approveWork")}</Button>
       </div>
 
-      <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(380px,1fr)]">
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(380px,1fr)]">
         <div className="h-[60vh] min-h-0 lg:h-auto">
           <ScanViewer pages={sub.pages_detail} regions={regions} selected={selected} onSelect={setSelected} />
         </div>
