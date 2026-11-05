@@ -1,0 +1,36 @@
+# Production overlay: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Uses pre-built images from the registry (CI pushes ghcr.io/<owner>/planit-*), HTTPS, no demo data.
+services:
+  backend:
+    build: !reset null
+    image: ${IMAGE_PREFIX}/backend:${IMAGE_TAG}
+    environment:
+      ENVIRONMENT: production
+      COOKIE_SECURE: "true"
+      SEED_DEMO: "false"
+      DEMO_AUTORUN: "false"
+      API_WORKERS: "4"
+    deploy:
+      resources: { limits: { memory: 2g } }
+  worker:
+    build: !reset null
+    image: ${IMAGE_PREFIX}/backend:${IMAGE_TAG}
+    environment:
+      ENVIRONMENT: production
+      WORKER_CONCURRENCY: "4"
+    deploy:
+      replicas: 2
+      resources: { limits: { memory: 4g } }
+  beat:
+    build: !reset null
+    image: ${IMAGE_PREFIX}/backend:${IMAGE_TAG}
+  frontend:
+    build: !reset null
+    image: ${IMAGE_PREFIX}/frontend:${IMAGE_TAG}
+  nginx:
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./nginx/prod.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/tls:/etc/nginx/tls:ro
+  postgres:
+    ports: !reset []

@@ -1,0 +1,22 @@
+# Single VPS with HTTPS (Let's Encrypt), images built on the server.
+# Used by deploy/install.sh:
+#   docker compose -f docker-compose.yml -f docker-compose.server.yml up -d --build
+services:
+  backend:
+    environment:
+      COOKIE_SECURE: "true"
+  nginx:
+    ports: ["80:80", "443:443"]
+    # reload every 12h so renewed certificates are picked up
+    command: ["/bin/sh", "-c", "while :; do sleep 12h; nginx -s reload; done & exec nginx -g 'daemon off;'"]
+    volumes:
+      - ./nginx/server.conf:/etc/nginx/nginx.conf:ro
+      - ./letsencrypt:/etc/letsencrypt:ro
+      - ./certbot-www:/var/www/certbot:ro
+  certbot:
+    image: certbot/certbot:v2.11.0
+    restart: unless-stopped
+    volumes:
+      - ./letsencrypt:/etc/letsencrypt
+      - ./certbot-www:/var/www/certbot
+    entrypoint: ["/bin/sh", "-c", "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done"]

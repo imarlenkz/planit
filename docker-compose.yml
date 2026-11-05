@@ -1,0 +1,104 @@
+# Planit — full stack. `cp .env.example .env && docker compose up -d --build`, then open http://localhost
+name: planit
+
+x-backend-env: &backend-env
+  env_file: .env
+  environment:
+    DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-planit}:${POSTGRES_PASSWORD:-planit}@postgres:5432/${POSTGRES_DB:-planit}
+    REDIS_URL: redis://redis:6379/0
+    QUEUE_MODE: celery
+    STORAGE_LOCAL_PATH: /data/storage
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-planit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-planit}
+      POSTGRES_DB: ${POSTGRES_DB:-planit}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-planit} -d ${POSTGRES_DB:-planit}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: [redisdata:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 20
+
+  backend:
+    build: { context: ./backend, target: runtime }
+    image: ${IMAGE_PREFIX:-planit}/backend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    <<: *backend-env
+    command: ["api"]
+    volumes: [storage:/data/storage]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  worker:
+    build: { context: ./backend, target: runtime }
+    image: ${IMAGE_PREFIX:-planit}/backend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    <<: *backend-env
+    command: ["worker"]
+    volumes: [storage:/data/storage]
+    depends_on:
+      backend: { condition: service_started }
+      redis: { condition: service_healthy }
+
+  beat:
+    build: { context: ./backend, target: runtime }
+    image: ${IMAGE_PREFIX:-planit}/backend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    <<: *backend-env
+    command: ["beat"]
+    depends_on:
+      redis: { condition: service_healthy }
+
+  frontend:
+    build:
+      context: ./frontend
+      args: { BACKEND_INTERNAL_URL: http://backend:8000 }
+    image: ${IMAGE_PREFIX:-planit}/frontend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on: [backend]
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports: ["${HTTP_PORT:-80}:80"]
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on: [frontend, backend]
+
+  # optional antivirus scanning of uploads: `docker compose --profile clamav up -d` and set CLAMAV_HOST=clamav
+  clamav:
+    image: clamav/clamav:1.4
+    profiles: [clamav]
+    restart: unless-stopped
+
+  # optional S3-compatible storage: `--profile s3`, then STORAGE_BACKEND=s3, S3_ENDPOINT_URL=http://minio:9000
+  minio:
+    image: minio/minio:RELEASE.2024-12-18T13-15-44Z
+    profiles: [s3]
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-planit}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-planit-secret}
+    volumes: [miniodata:/data]
+
+volumes:
+  pgdata:
+  redisdata:
+  storage:
+  miniodata:
