@@ -14,6 +14,8 @@
 #                PORT (proxy mode, default 8088)
 #                IID_CLIENT_ID / IID_CLIENT_SECRET (+ IID_ISSUER, default https://id.imarlen.kz):
 #                      enable "Sign in with iMARLEN ID"; written into .env, also on updates
+#                USTAZ_INTEGRATION_KEY (+ USTAZ_API_URL): enable "Import from Ustaz"; the same key as
+#                      PLANIT_INTEGRATION_KEY in Ustaz's .env
 set -euo pipefail
 
 DOMAIN="${DOMAIN:?set DOMAIN, e.g. DOMAIN=checker.imarlen.kz}"
@@ -77,6 +79,11 @@ if [ -n "${IID_CLIENT_SECRET:-}" ]; then
   setenv IID_CLIENT_ID "${IID_CLIENT_ID:-planit}"
   setenv IID_CLIENT_SECRET "$IID_CLIENT_SECRET"
   echo "iMARLEN ID sign-in enabled (client ${IID_CLIENT_ID:-planit})"
+fi
+if [ -n "${USTAZ_INTEGRATION_KEY:-}" ]; then
+  setenv USTAZ_API_URL "${USTAZ_API_URL:-https://ustaz.imarlen.kz/api}"
+  setenv USTAZ_INTEGRATION_KEY "$USTAZ_INTEGRATION_KEY"
+  echo "Ustaz student import enabled"
 fi
 # small servers: fewer processes so the stack fits next to other apps
 MEM_MB=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo)

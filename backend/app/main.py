@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.routes import admin, assessments, auth, bank, org, processing, results, review, sso
+from app.api.routes import admin, assessments, auth, bank, org, processing, results, review, sso, ustaz
 from app.core.config import settings
 
 logging.basicConfig(level=logging.INFO if not settings.DEBUG else logging.DEBUG,
@@ -73,5 +73,5 @@ async def unhandled(request: Request, exc: Exception):
 
 
 for r in (auth.router, org.router, assessments.router, processing.router, review.router, results.router,
-          bank.router, admin.router, sso.router):
+          bank.router, admin.router, sso.router, ustaz.router):
     app.include_router(r, prefix=settings.API_PREFIX)
