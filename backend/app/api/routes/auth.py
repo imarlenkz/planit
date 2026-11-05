@@ -23,7 +23,7 @@ from app.services.audit import audit
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-def _set_cookies(resp: Response, user: User) -> dict:
+def set_auth_cookies(resp: Response, user: User) -> dict:
     access = create_access_token(user.id, user.role)
     refresh = create_refresh_token(user.id)
     csrf = new_csrf_token()
@@ -38,6 +38,7 @@ def _set_cookies(resp: Response, user: User) -> dict:
 def user_payload(db: Session, user: User) -> dict:
     data = UserOut.model_validate(user).model_dump()
     data["school_name"] = user.school.name if user.school else None
+    data["sso"] = bool(user.idp_sub)
     if user.role == "student":
         s = db.scalar(select(Student).where(Student.user_id == user.id))
         data["student_id"] = s.id if s else None
@@ -53,7 +54,7 @@ def login(body: LoginIn, request: Request, response: Response, db: Session = Dep
     if not user.is_active:
         raise HTTPException(403, "Аккаунт бұғатталған")
     user.last_login_at = datetime.now(UTC)
-    tokens = _set_cookies(response, user)
+    tokens = set_auth_cookies(response, user)
     audit(db, user, "auth.login", "user", user.id, request=request)
     db.commit()
     return {"user": user_payload(db, user), **tokens}
@@ -68,7 +69,7 @@ def refresh(request: Request, response: Response, db: Session = Depends(get_db))
     user = db.get(User, int(payload["sub"]))
     if not user or not user.is_active:
         raise HTTPException(401, "Қайта кіру қажет")
-    return {"user": user_payload(db, user), **_set_cookies(response, user)}
+    return {"user": user_payload(db, user), **set_auth_cookies(response, user)}
 
 
 @router.post("/logout")

@@ -128,7 +128,9 @@ def list_schools(db: Session = Depends(get_db), user: User = Depends(get_current
 
 @router.post("/schools", response_model=SchoolOut, status_code=201)
 def create_school(body: SchoolIn, request: Request, db: Session = Depends(get_db), user: User = Depends(superadmin)):
-    s = School(**body.model_dump())
+    data = body.model_dump()
+    data["idp_code"] = (data.get("idp_code") or "").strip() or None
+    s = School(**data)
     db.add(s)
     db.flush()
     audit(db, user, "school.create", "school", s.id, after=body.model_dump(), request=request)
@@ -141,7 +143,11 @@ def update_school(school_id: int, body: SchoolIn, db: Session = Depends(get_db),
     s = db.get(School, school_id)
     if not s or (user.role != "admin" and s.id != user.school_id):
         raise HTTPException(404, "Мектеп табылмады")
-    for k, v in body.model_dump().items():
+    data = body.model_dump()
+    data["idp_code"] = (data.get("idp_code") or "").strip() or None
+    if data["idp_code"] and db.scalar(select(School.id).where(School.idp_code == data["idp_code"], School.id != s.id)):
+        raise HTTPException(409, "Бұл iMARLEN ID коды басқа мектепке берілген")
+    for k, v in data.items():
         setattr(s, k, v)
     db.commit()
     return s

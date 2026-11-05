@@ -59,7 +59,46 @@ function Profile() {
           <Button onClick={changePw} disabled={!pw.old_password || pw.new_password.length < 8}>{t("common.save")}</Button>
         </CardContent>
       </Card>
+      {isAdmin(user) ? <SchoolSettings /> : null}
     </div>
+  );
+}
+
+type SchoolRow = { id: number; name: string; city: string | null; region: string | null; idp_code: string | null };
+
+function SchoolRowEditor({ s, onSaved }: { s: SchoolRow; onSaved: () => void }) {
+  const { t } = useI18n();
+  const [v, setV] = useState({ name: s.name, idp_code: s.idp_code ?? "" });
+  const save = async () => {
+    try {
+      await api(`/schools/${s.id}`, { method: "PATCH", json: { name: v.name, city: s.city, region: s.region, idp_code: v.idp_code.trim() || null } });
+      toast.success(t("common.saved"));
+      onSaved();
+    } catch (e: any) { toast.error(e.message); }
+  };
+  return (
+    <div className="grid gap-2 sm:grid-cols-[1fr_200px_auto] sm:items-end">
+      <Field label={t("common.name")}><Input value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} /></Field>
+      <Field label={t("set.idpCode")}><Input value={v.idp_code} placeholder="SCH-001" onChange={(e) => setV({ ...v, idp_code: e.target.value })} className="font-mono" /></Field>
+      <Button variant="outline" onClick={save} disabled={v.name.trim().length < 2}>{t("common.save")}</Button>
+    </div>
+  );
+}
+
+function SchoolSettings() {
+  const { t } = useI18n();
+  const { data, reload } = useApi<SchoolRow[]>("/schools");
+  if (!data?.length) return null;
+  return (
+    <Card className="lg:col-span-2">
+      <CardHeader>
+        <CardTitle>{t("auth.school")} · iMARLEN ID</CardTitle>
+        <CardDescription>{t("set.idpHint")}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {data.map((s) => <SchoolRowEditor key={s.id} s={s} onSaved={reload} />)}
+      </CardContent>
+    </Card>
   );
 }
 

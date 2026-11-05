@@ -15,6 +15,8 @@ class School(IdMixin, TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(255))
     city: Mapped[str | None] = mapped_column(String(120))
     region: Mapped[str | None] = mapped_column(String(120))
+    # the school's code in iMARLEN ID (id.imarlen.kz); SSO users are matched to a school by it
+    idp_code: Mapped[str | None] = mapped_column(String(64), unique=True)
     settings: Mapped[dict] = mapped_column(JSON, default=dict)
 
 
@@ -28,6 +30,8 @@ class User(IdMixin, TimestampMixin, Base):
     locale: Mapped[str] = mapped_column(String(5), default="kk")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # iMARLEN ID subject; set once the account has signed in through SSO
+    idp_sub: Mapped[str | None] = mapped_column(String(64), unique=True)
 
     school: Mapped[School | None] = relationship()
     teacher: Mapped["Teacher | None"] = relationship(back_populates="user", uselist=False)

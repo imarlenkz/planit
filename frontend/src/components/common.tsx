@@ -41,7 +41,7 @@ export function SubmissionBadge({ status }: { status: string }) {
 }
 
 export function TypeBadge({ type }: { type: string }) {
-  const color = { BZhB: "bg-blue-500/10 text-blue-600 dark:text-blue-300", TZhB: "bg-violet-500/10 text-violet-600 dark:text-violet-300", AB: "bg-teal-500/10 text-teal-700 dark:text-teal-300" }[type];
+  const color = { BZhB: "bg-[#3a4a7a]/10 text-[#3a4a7a] dark:bg-[#3a4a7a]/30 dark:text-[#aab6e0]", TZhB: "bg-[#8e4a9e]/10 text-[#8e4a9e] dark:bg-[#8e4a9e]/25 dark:text-[#c79ad2]", AB: "bg-[#17b79a]/10 text-[#0f8a73] dark:bg-[#17b79a]/20 dark:text-[#5fd8c0]" }[type];
   return <span className={cn("rounded-md px-1.5 py-0.5 text-xs font-semibold", color)}>{TYPE_LABEL[type] ?? type}</span>;
 }
 

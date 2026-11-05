@@ -60,7 +60,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
     <nav className="flex flex-col gap-5 px-3 py-4">
       {nav.map((g) => (
         <div key={g.group} className="space-y-1">
-          <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/80">{t(g.group)}</p>
+          <p className="font-mono-label px-3 pb-1 text-[10.5px] text-brand-700 dark:text-brand-400">{t(g.group)}</p>
           {g.items.map((it) => {
             const active = path === it.href || path.startsWith(it.href + "/");
             const Icon = it.icon;
@@ -70,8 +70,10 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
                 href={it.href}
                 onClick={onNavigate}
                 className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                  active ? "bg-primary/10 text-primary" : "text-sidebar-foreground hover:bg-accent hover:text-accent-foreground",
+                  "flex items-center gap-3 rounded-[13px] px-3 py-2.5 text-sm font-semibold transition-colors",
+                  active
+                    ? "bg-sidebar-active text-sidebar-active-foreground shadow-sm"
+                    : "text-sidebar-foreground/55 hover:bg-foreground/5 hover:text-sidebar-foreground",
                 )}
               >
                 <Icon className="size-4 shrink-0" />
@@ -95,7 +97,7 @@ function UserMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-2 rounded-full p-0.5 pr-2 hover:bg-accent" aria-label="User menu">
-          <span className="grid size-8 place-items-center rounded-full bg-primary/15 text-xs font-semibold text-primary">{initials}</span>
+          <span className="grid size-8 place-items-center rounded-full bg-brand-500 text-xs font-bold text-white">{initials}</span>
           <span className="hidden text-left leading-tight md:block">
             <span className="block max-w-[160px] truncate text-sm font-medium">{user.full_name}</span>
             <span className="block text-xs text-muted-foreground">{t(`role.${user.role}` as MessageKey)}</span>
@@ -165,7 +167,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <NavLinks />
         </div>
         <div className="border-t p-4 text-xs text-muted-foreground">
-          <p className="truncate">{user.school_name ?? t("app.tagline")}</p>
+          <p className="font-mono-label mb-1 text-[10px] text-muted-foreground/70">{t("auth.school")}</p>
+          <p className="truncate font-semibold text-foreground/80">{user.school_name ?? t("app.tagline")}</p>
         </div>
       </aside>
       {open ? (

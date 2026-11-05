@@ -31,6 +31,14 @@ class Settings(BaseSettings):
     RATE_LIMIT_LOGIN_PER_MIN: int = 10
     RATE_LIMIT_UPLOAD_PER_MIN: int = 30
 
+    # Sign-in through iMARLEN ID (OIDC). All four set = the "iMARLEN ID" button appears on /login.
+    IID_ISSUER: str = ""
+    IID_CLIENT_ID: str = ""
+    IID_CLIENT_SECRET: str = ""
+    PUBLIC_URL: str = ""  # e.g. https://checker.imarlen.kz
+    # create a school from the iMARLEN ID claims when no school has a matching idp_code
+    IID_AUTO_CREATE_SCHOOL: bool = True
+
     # Storage
     STORAGE_BACKEND: Literal["local", "s3"] = "local"
     STORAGE_LOCAL_PATH: str = "./data/storage"

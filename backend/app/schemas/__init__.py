@@ -67,6 +67,7 @@ class SchoolIn(BaseModel):
     name: str = Field(min_length=2, max_length=255)
     city: str | None = None
     region: str | None = None
+    idp_code: str | None = Field(None, max_length=64)
 
 
 class SchoolOut(ORM):
@@ -74,6 +75,7 @@ class SchoolOut(ORM):
     name: str
     city: str | None
     region: str | None
+    idp_code: str | None = None
 
 
 class SubjectIn(BaseModel):

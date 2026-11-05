@@ -23,10 +23,10 @@ export function pctColor(p: number | null | undefined) {
 
 export function heatBg(p: number | null | undefined) {
   if (p === null || p === undefined) return "bg-muted";
-  if (p >= 85) return "bg-emerald-500/80 text-white";
-  if (p >= 65) return "bg-emerald-300/70 dark:bg-emerald-700/60";
-  if (p >= 40) return "bg-amber-300/70 dark:bg-amber-600/60";
-  return "bg-rose-400/70 text-white dark:bg-rose-700/70";
+  if (p >= 85) return "bg-brand-500/85 text-white";
+  if (p >= 65) return "bg-brand-100 dark:bg-brand-700/60";
+  if (p >= 40) return "bg-[#c99a3b]/35 dark:bg-[#c99a3b]/45";
+  return "bg-[#d9634a]/75 text-white dark:bg-[#d9634a]/60";
 }
 
 export function download(url: string) {

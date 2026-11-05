@@ -12,7 +12,7 @@ import { useApi } from "@/lib/hooks";
 import { useI18n, type MessageKey } from "@/lib/i18n";
 import { fmt, pctColor } from "@/lib/utils";
 
-const SPLIT_COLORS: Record<string, string> = { auto_approved: "#16a34a", approved: "#0f766e", medium: "#3b82f6", needs_review: "#f59e0b", overridden: "#8b5cf6" };
+const SPLIT_COLORS: Record<string, string> = { auto_approved: "#2f9e6e", approved: "#17b79a", medium: "#3a4a7a", needs_review: "#c99a3b", overridden: "#8e4a9e" };
 
 export default function Dashboard() {
   const { t } = useI18n();
@@ -94,7 +94,7 @@ export default function Dashboard() {
                     <ResponsiveContainer>
                       <PieChart>
                         <Pie data={split} dataKey="value" innerRadius={34} outerRadius={60} paddingAngle={2} stroke="none">
-                          {split.map((s) => <Cell key={s.key} fill={SPLIT_COLORS[s.key] ?? "#94a3b8"} />)}
+                          {split.map((s) => <Cell key={s.key} fill={SPLIT_COLORS[s.key] ?? "#9aa39f"} />)}
                         </Pie>
                         <Tooltip />
                       </PieChart>

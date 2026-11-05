@@ -168,6 +168,24 @@ curl -fsSL https://raw.githubusercontent.com/imarlenkz/planit/main/deploy/instal
 
 Скрипт Docker-ді орнатады, кодты `/opt/planit`-ке алады, құпиялары генерацияланған `.env` жасайды, Let's Encrypt сертификатын алады (автоматты жаңартумен), образдарды серверде жинап, стекті іске қосады. Жаңарту үшін сол команданы қайта іске қосыңыз — деректер, `.env` және сертификаттар сақталады. Демо деректерсіз орнату: `DEMO=false`.
 
+### iMARLEN ID арқылы кіру (SSO)
+
+Planit id.imarlen.kz-ке стандартты OIDC клиенті ретінде қосылады (authorization code + PKCE). iMARLEN ID серверінде (`/opt/iid`) клиентті тіркеңіз:
+
+```bash
+cd /opt/iid && docker compose exec id node --disable-warning=ExperimentalWarning src/cli.mjs \
+  client planit "Planit" https://checker.imarlen.kz/api/auth/sso/callback https://checker.imarlen.kz/ https://checker.imarlen.kz/login
+```
+
+Шыққан `client_secret`-ті орнату командасына беріңіз (ол `.env`-ке жазылады):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/imarlenkz/planit/main/deploy/install.sh \
+  | sudo DOMAIN=checker.imarlen.kz IID_CLIENT_ID=planit IID_CLIENT_SECRET=... bash
+```
+
+Пайдаланушы `sub` бойынша табылады, болмаса сол email-мен бар аккаунт бір рет байланыстырылады, болмаса жаңа аккаунт жасалады. Рөлдер: student → оқушы, teacher → мұғалім, school_admin → мектеп әкімшісі, platform_owner → әкімші; ата-ана кіре алмайды. Мектеп `Баптаулар → Профиль`-дегі «iMARLEN ID мектеп коды» бойынша сәйкестендіріледі (код табылмаса, `IID_AUTO_CREATE_SCHOOL=true` кезінде мектеп автоматты жасалады). Оқушы сыныбы мен аты-жөні бойынша тізімдегі жазбасына қосылады. Email/құпиясөзбен кіру қатар жұмыс істей береді.
+
 ### Registry образдары арқылы (CI/CD)
 
 1. Серверде `/opt/planit` каталогын жасап, `.env` файлын толтырыңыз: `ENVIRONMENT=production`, күшті `SECRET_KEY`, `COOKIE_SECURE=true`, `FRONTEND_ORIGINS=https://your.domain`, `SEED_DEMO=false`, `STORAGE_ENCRYPTION_KEY`, дерекқор құпиясөздері.

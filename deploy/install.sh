@@ -11,6 +11,8 @@
 #                      Planit listens on 127.0.0.1:$PORT and a site for $DOMAIN is added to the host nginx).
 #                      Default: proxy when port 80 is already taken, otherwise standalone.
 #                PORT (proxy mode, default 8088)
+#                IID_CLIENT_ID / IID_CLIENT_SECRET (+ IID_ISSUER, default https://id.imarlen.kz):
+#                      enable "Sign in with iMARLEN ID"; written into .env, also on updates
 set -euo pipefail
 
 DOMAIN="${DOMAIN:?set DOMAIN, e.g. DOMAIN=checker.imarlen.kz}"
@@ -62,6 +64,16 @@ if [ ! -f .env ]; then
   echo "created .env with generated secrets: $DIR/.env (add AI keys there later if needed)"
 else
   echo ".env exists - kept"
+fi
+# PUBLIC_URL is needed by the iMARLEN ID sign-in redirect
+grep -q '^PUBLIC_URL=' .env || echo "PUBLIC_URL=" >> .env
+grep -q '^PUBLIC_URL=.\+' .env || sed -i "s|^PUBLIC_URL=.*|PUBLIC_URL=https://$DOMAIN|" .env
+setenv() { if grep -q "^$1=" .env; then sed -i "s|^$1=.*|$1=$2|" .env; else echo "$1=$2" >> .env; fi; }
+if [ -n "${IID_CLIENT_SECRET:-}" ]; then
+  setenv IID_ISSUER "${IID_ISSUER:-https://id.imarlen.kz}"
+  setenv IID_CLIENT_ID "${IID_CLIENT_ID:-planit}"
+  setenv IID_CLIENT_SECRET "$IID_CLIENT_SECRET"
+  echo "iMARLEN ID sign-in enabled (client ${IID_CLIENT_ID:-planit})"
 fi
 # small servers: fewer processes so the stack fits next to other apps
 MEM_MB=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo)

@@ -11,6 +11,7 @@ export type User = {
   school_name?: string | null;
   locale: string;
   student_id?: number | null;
+  sso?: boolean;
 };
 
 type Ctx = { user: User | null; loading: boolean; login: (e: string, p: string) => Promise<User>; logout: () => Promise<void>; refresh: () => Promise<void> };
@@ -38,9 +39,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return r.user;
   };
   const logout = async () => {
+    const viaSso = !!user?.sso;
     await api("/auth/logout", { method: "POST" }).catch(() => {});
     setUser(null);
-    window.location.href = "/login";
+    // an iMARLEN ID user is also signed out there, so a shared school computer is really logged out
+    window.location.href = viaSso ? "/api/auth/sso/logout" : "/login";
   };
   return <AuthContext.Provider value={{ user, loading, login, logout, refresh }}>{children}</AuthContext.Provider>;
 }

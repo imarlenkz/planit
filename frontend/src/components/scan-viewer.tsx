@@ -9,10 +9,10 @@ import { cn } from "@/lib/utils";
 export type Region = { id: number; number: number; page_id: number | null; bbox: { x: number; y: number; w: number; h: number } | null; tone: "success" | "warning" | "destructive" | "primary" };
 
 const TONE: Record<Region["tone"], string> = {
-  success: "border-emerald-500 bg-emerald-500/10",
-  warning: "border-amber-500 bg-amber-500/15",
-  destructive: "border-rose-500 bg-rose-500/10",
-  primary: "border-blue-500 bg-blue-500/10",
+  success: "border-brand-500 bg-brand-500/10",
+  warning: "border-[#c99a3b] bg-[#c99a3b]/15",
+  destructive: "border-[#d9634a] bg-[#d9634a]/10",
+  primary: "border-[#3a4a7a] bg-[#3a4a7a]/10",
 };
 
 export function ScanViewer({ pages, regions, selected, onSelect }: { pages: { id: number; page_number: number; width?: number; height?: number }[]; regions: Region[]; selected?: number | null; onSelect?: (id: number) => void }) {
