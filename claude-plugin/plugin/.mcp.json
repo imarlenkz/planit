@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "imarlen": {
+      "type": "http",
+      "url": "https://ai.imarlen.kz/mcp",
+      "headers": {
+        "Authorization": "Bearer ${IMARLEN_MCP_TOKEN}"
+      }
+    }
+  }
+}

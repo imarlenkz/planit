@@ -1,0 +1,20 @@
+name: claude-plugin
+on:
+  push:
+    paths: ["claude-plugin/**", ".claude-plugin/**", ".github/workflows/claude-plugin.yml"]
+  pull_request:
+    paths: ["claude-plugin/**", ".claude-plugin/**", ".github/workflows/claude-plugin.yml"]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: claude-plugin/server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - run: python -m pytest -q
+      - run: node -e "new Function(require('fs').readFileSync('widget/widget.js','utf8'))"
