@@ -175,6 +175,8 @@ fi
 
 log "6/6 Build and start (the first build takes several minutes)"
 $COMPOSE up -d --build --remove-orphans
+# nginx resolves the backend/frontend containers once at start; recreated containers get new IPs (502 otherwise)
+$COMPOSE restart nginx
 echo "waiting for the API (first start also processes the demo scan)..."
 for _ in $(seq 1 120); do
   if curl -fsS "https://$DOMAIN/api/health" >/dev/null 2>&1; then break; fi
